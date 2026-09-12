@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bytecoin PixelWorld Shop</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #0f172a; color: #f1f5f9; min-height: 100vh; }
+        .hidden { display: none !important; }
+        
+        /* LAYOUT UTAMA */
+        .app-container { display: flex; min-height: 100vh; }
+        
+        /* MENU SAMPING KIRI */
+        .sidebar { width: 240px; background: #1e293b; padding: 20px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .sidebar-logo { padding: 15px 20px; font-size: 20px; font-weight: bold; color: #fcd34d; cursor: pointer; border-bottom: 1px solid #334155; margin-bottom: 10px; }
+        .sidebar-menu { list-style: none; }
+        .sidebar-menu li { padding: 0; }
+        .sidebar-menu li a { display: block; padding: 14px 25px; color: #cbd5e1; text-decoration: none; transition: 0.2s; border-left: 3px solid transparent; }
+        .sidebar-menu li a:hover, .sidebar-menu li a.active { background: #334155; color: #fcd34d; border-left-color: #fcd34d; }
+        .sidebar-menu li a.admin-link { color: #f87171; }
+        .sidebar-menu li a.admin-link:hover, .sidebar-menu li a.admin-link.active { background: #450a0a; color: #fca5a5; border-left-color: #f87171; }
+        .sidebar-menu li a.ship-link { color: #86efac; }
+        .sidebar-menu li a.ship-link:hover, .sidebar-menu li a.ship-link.active { background: #052e16; color: #86efac; border-left-color: #4ade80; }
+        
+        /* KONTEN UTAMA */
+        .content { flex: 1; margin-left: 240px; padding: 25px; background: #0f172a; min-height: 100vh; }
+        .content-header { margin-bottom: 25px; }
+        .content-header h1 { font-size: 26px; color: #fcd34d; }
+        .content-header p { color: #94a3b8; margin-top: 5px; }
+        
+        /* KOTAK UMUM */
+        .card { background: #1e293b; border-radius: 12px; padding: 22px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .card h2 { font-size: 18px; margin-bottom: 18px; color: #fcd34d; display: flex; align-items: center; gap: 8px; }
+        .btn { padding: 11px 18px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: #fcd34d; color: #000; }
+        .btn-primary:hover { background: #fbbf24; }
+        .btn-success { background: #22c55e; color: white; }
+        .btn-success:hover { background: #16a34a; }
+        .btn-warning { background: #f59e0b; color: #000; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+        input, select, textarea { width: 100%; padding: 12px; background: #334155; border: 2px solid #475569; border-radius: 8px; color: white; font-size: 15px; margin-bottom: 12px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #fcd34d; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; color: #e2e8f0; font-size: 14px; }
+        
+        /* STATUS */
+        .status { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-waitproof { background: #dbeafe; color: #1e40af; }
+        .status-shipped { background: #d1fae5; color: #065f46; }
+        .status-done { background: #e5e7eb; color: #4b5563; }
+        
+        /* LOGIN */
+        .login-wrapper { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #0f172a, #1e293b); }
+        .login-card { width: 100%; max-width: 400px; background: #1e293b; border-radius: 16px; padding: 35px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+        .login-card h2 { text-align: center; margin-bottom: 25px; color: #fcd34d; }
+        
+        /* ITEM PRODUK */
+        .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .item-card { background: #334155; border-radius: 10px; padding: 15px; text-align: center; }
+        .item-card img { width: 80px; height: 80px; object-fit: contain; margin-bottom: 10px; border-radius: 6px; background: #475569; padding: 8px; }
+        .item-name { font-weight: 600; margin-bottom: 5px; }
+        .item-price { color: #fcd34d; font-weight: bold; font-size: 18px; }
+        
+        /* ORDER CARD */
+        .order-card { background: #334155; border-radius: 10px; padding: 16px; margin-bottom: 12px; border-left: 4px solid #fcd34d; }
+        .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .order-id { font-size: 12px; color: #94a3b8; }
+        .order-info p { margin: 4px 0; font-size: 14px; }
+        .order-actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+        
+        /* NOTIFIKASI */
+        .toast { position: fixed; bottom: 25px; right: 25px; background: #1e293b; color: white; padding: 14px 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 9999; display: none; max-width: 320px; }
+        .toast.show { display: block; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity:0; transform: translateX(30px); } to { opacity:1; transform: translateX(0); } }
+        
+        /* QUANTITY SELECTOR */
+        .qty-box { display: flex; align-items: center; gap: 10px; margin: 15px 0; }
+        .qty-btn { width: 40px; height: 40px; padding: 0; font-size: 20px; display: flex; align-items: center; justify-content: center; }
+        .qty-value { font-size: 22px; font-weight: bold; min-width: 60px; text-align: center; }
+        
+        /* HIDDEN ON MOBILE */
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: auto; position: sticky; }
+            .content { margin-left: 0; }
+            .app-container { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NOTIFIKASI -->
+<div class="toast" id="toast"></div>
+
+<!-- ============= HALAMAN LOGIN ============= -->
+<div id="page-login" class="login-wrapper">
+    <div class="login-card">
+        <h2>🔐 Bytecoin Shop</h2>
+        <input type="text" id="login-user" placeholder="Nama Pengguna">
+        <input type="password" id="login-pass" placeholder="Kata Sandi">
+        <button class="btn btn-primary" style="width:100%; margin-top:5px;" onclick="doLogin()">Masuk</button>
+        <p style="text-align:center; margin-top:15px; font-size:14px; color:#94a3b8;">
+            Belum punya akun? <a href="#" onclick="showPage('register')" style="color:#fcd34d; text-decoration:none;">Daftar Sekarang</a>
+        </p>
+    </div>
+</div>
+
+<!-- ============= HALAMAN DAFTAR ============= -->
+<div id="page-register" class="login-wrapper hidden">
+    <div class="login-card">
+        <h2>📝 Daftar Akun</h2>
+        <input type="text" id="reg-user" placeholder="Nama Pengguna">
+        <input type="password" id="reg-pass" placeholder="Kata Sandi">
+        <button class="btn btn-primary" style="width:100%; margin-top:5px;" onclick="doRegister()">Daftar</button>
+        <p style="text-align:center; margin-top:15px; font-size:14px; color:#94a3b8;">
+            Sudah punya akun? <a href="#" onclick="showPage('login')" style="color:#fcd34d; text-decoration:none;">Masuk</a>
+        </p>
+    </div>
+</div>
+
+<!-- ============= APLIKASI UTAMA ============= -->
+<div id="page-app" class="app-container hidden">
+    <!-- MENU SAMPING -->
+    <aside class="sidebar">
+        <div class="sidebar-logo" id="mainLogo" onclick="tapLogo()">💰 Bytecoin Shop</div>
+        <ul class="sidebar-menu">
+            <li><a href="#" class="active" onclick="switchMenu('buy')">🛒 Beli Bytecoin</a></li>
+            <li><a href="#" onclick="switchMenu('myorders')">📋 Pesanan Saya</a></li>
+            <li><a href="#" onclick="switchMenu('world')">🌍 World</a></li>
+            <li><a href="#" onclick="switchMenu('payment')">💳 Metode Bayar</a></li>
+            <li id="adminMenuLink" class="hidden"><a href="#" class="admin-link" onclick="switchMenu('admin')">🔐 Admin Panel</a></li>
+            <li id="shipMenuLink" class="hidden"><a href="#" class="ship-link" onclick="switchMenu('arship')">📦 Arship Order</a></li>
+            <li><a href="#" onclick="doLogout()" style="color:#94a3b8; margin-top:20px;">🚪 Keluar</a></li>
+        </ul>
+    </aside>
+
+    <!-- KONTEN UTAMA -->
+    <main class="content">
+        <!-- ========== BELI BYTECOIN ========== -->
+        <div id="menu-buy" class="menu-content">
+            <div class="content-header">
+                <h1>🛒 Beli Bytecoin PixelWorld</h1>
+                <p>Pembelian per 1k — isi data lengkap lalu konfirmasi</p>
+            </div>
+
+            <div class="card">
+                <h2>📦 Informasi Pembelian</h2>
+                
+                <div id="itemSelectSection">
+                    <label>Pilih Item</label>
+                    <select id="buyItem">
+                        <option value="">-- Pilih Item --</option>
+                    </select>
+                </div>
+
+                <div class="qty-box">
+                    <button class="btn qty-btn" onclick="changeQty(-1)">−</button>
+                    <span class="qty-value" id="qtyValue">1k</span>
+                    <button class="btn qty-btn" onclick="changeQty(1)">+</button>
+                </div>
+                <p style="color:#94a3b8; font-size:13px; margin-bottom:15px;">Jumlah: <span id="qtyNum">1</span> × 1k Bytecoin</p>
+
+                <label>Nama Pembeli</label>
+                <input type="text" id="buyerName" placeholder="Otomatis dari akun" readonly style="background:#475569; cursor:not-allowed;">
+
+                <label>Nama World</label>
+                <input type="text" id="worldName" placeholder="Contoh: MYWORLDXYZ" required>
+
+                <div class="card" style="background:#334155; margin-top:15px;">
+                    <p style="font-size:14px; color:#94a3b8;">Harga per 1k:</p>
+                    <p style="font-size:24px; font-weight:bold; color:#fcd34d;" id="pricePerK">Rp 0</p>
+                    <p style="font-size:14px; color:#94a3b8; margin-top:10px;">Total Pembayaran:</p>
+                    <p style="font-size:28px; font-weight:bold; color:#22c55e;" id="totalPrice">Rp 0</p>
+                </div>
+
+                <button class="btn btn-primary" style="width:100%; margin-top:15px;" onclick="placeOrder()">✅ Buat Pesanan</button>
+            </div>
+        </div>
+
+        <!-- ========== PESANAN SAYA ========== -->
+        <div id="menu-myorders" class="menu-content hidden">
+            <div class="content-header">
+                <h1>📋 Pesanan Saya</h1>
+                <p>Lihat status dan riwayat pesanan kamu</p>
+            </div>
+            <div id="myOrdersList"></div>
+        </div>
+
+        <!-- ========== WORLD ========== -->
+        <div id="menu-world" class="menu-content hidden">
+            <div class="content-header">
+                <h1>🌍 Daftar World</h1>
+                <p>Semua pesanan berdasarkan nama world</p>
+            </div>
+            <div id="worldList"></div>
+        </div>
+
+        <!-- ========== METODE BAYAR ========== -->
+        <div id="menu-payment" class="menu-content hidden">
+            <div class="content-header">
+                <h1>💳 Metode Pembayaran</h1>
+                <p>Transfer sesuai nominal yang tertera di pesanan</p>
+            </div>
+            <div class="card">
+                <h2>Scan QRIS</h2>
+                <div style="text-align:center; margin:20px 0;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=00020101021126570014ID100000000000000000000000000000000000000000000000000000000000000000" style="width:250px; border-radius:10px;" alt="QRIS">
+                </div>
+                <p style="text-align:center; color:#94a3b8;">Atau Transfer ke:</p>
+                <p style="text-align:center; font-size:18px; font-weight:bold; margin-top:10px;">Bank BCA — 1234567890 a.n. Toko Kamu</p>
+                <p style="text-align:center; font-size:13px; color:#94a3b8; margin-top:15px;">⚠️ Pastikan nominal transfer SAMA dengan total pesanan</p>
+            </div>
+        </div>
+
+        <!-- ========== ADMIN PANEL ========== -->
+        <div id="menu-admin" class="menu-content hidden">
+            <div class="content-header">
+                <h1>🔐 Panel Admin</h1>
+                <p>Kelola toko, harga, dan pesanan masuk</p>
+            </div>
+
+            <!-- TAB ADMIN -->
+            <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                <button class="btn btn-sm btn-primary" onclick="adminTab('orders')">📋 Semua Pesanan</button>
+                <button class="btn btn-sm" style="background:#334155; color:white;" onclick="adminTab('shopset')">⚙️ Pengaturan Toko</button>
+                <button class="btn btn-sm" style="background:#334155; color:white;" onclick="adminTab('prices')">💰 Atur Harga</button>
+                <button class="btn btn-sm" style="background:#334155; color:white;" onclick="adminTab('users')">👤 Pengguna</button>
+            </div>
+
+            <!-- ADMIN: SEMUA PESANAN -->
+            <div id="admin-orders">
+                <h2>📋 Pesanan Masuk</h2>
+                <div id="allOrdersList"></div>
+            </div>
+
+            <!-- ADMIN: PENGATURAN TOKO -->
+            <div id="admin-shopset" class="hidden">
+                <h2>⚙️ Tambah Item Baru</h2>
+                <label>Nama Item</label>
+                <input type="text" id="newItemName" placeholder="Contoh: Bytecoin">
+                <label>Foto Item (URL atau Upload)</label>
+                <input type="file" id="newItemImg" accept="image/*" onchange="previewImg(event)">
+                <img id="imgPreview" style="max-width:100px; display:none; margin:10px 0; border-radius:6px;">
+                <button class="btn btn-primary" onclick="addItem()">➕ Tambah Item</button>
+                
+                <h2 style="margin-top:30px;">📦 Daftar Item Toko</h2>
+                <div id="shopItemsList"></div>
+            </div>
+
+            <!-- ADMIN: ATUR HARGA -->
+            <div id="admin-prices" class="hidden">
+                <h2>💰 Atur Harga per 1k</h2>
+                <p style="color:#94a3b8; margin-bottom:15px;">Tetapkan harga untuk setiap item (per 1k unit)</p>
+                <div id="priceSettingList"></div>
+                <button class="btn btn-primary" onclick="saveAllPrices()">💾 Simpan Semua Harga</button>
+            </div>
+
+            <!-- ADMIN: PENGGUNA -->
+            <div id="admin-users" class="hidden">
+                <h2>👤 Daftar Pengguna</h2>
+                <div id="usersList"></div>
+            </div>
+        </div>
+
+        <!-- ========== ARSHIP ORDER (HANYA ADMIN) ========== -->
+        <div id="menu-arship" class="menu-content hidden">
+            <div class="content-header">
+                <h1>📦 Arship Order — Riwayat Pengiriman</h1>
+                <p>Hanya untuk kamu — semua pesanan selesai</p>
+            </div>
+            <div id="arshipList"></div>
+        </div>
+    </main>
+</div>
+
+<script>
+// ================== DATA AWAL ==================
+const ADMIN_USER = "skonyu.zs2";
+const ADMIN_PASS = "D73fFCCC?";
+
+let currentUser = null;
+let tapCount = 0;
+let tapTimer = null;
+let activeMenu = 'buy';
+let adminTabActive = 'orders';
+let buyQty = 1;
+let itemImgData = "";
+
+// PENYIMPANAN DATA
+function getStorage(key, def) { return JSON.parse(localStorage.getItem(key) || JSON.stringify(def)); }
+function setStorage(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+// DATA
+let users = getStorage('users', []);
+let items = getStorage('items', [
+    { id:1, name:"Bytecoin PixelWorld", pricePerK:1000, img:"https://cdn-icons-png.flaticon.com/512/897/897163.png" }
+]);
+let orders = getStorage('orders', []);
+let arshipOrders = getStorage('arshipOrders', []);
+
+// ================== FUNGSI LOGIN ==================
+function showPage(p) {
+    document.getElementById('page-login').classList.add('hidden');
+    document.getElementById('page-register').classList.add('hidden');
+    document.getElementById('page-app').classList.add('hidden');
+    document.getElementById('page-'+p).classList.remove('hidden');
+}
+
+function doLogin() {
+    let u = document.getElementById('login-user').value.trim();
+    let p = document.getElementById('login-pass').value.trim();
+    
+    // Admin
+    if(u === ADMIN_USER && p === ADMIN_PASS) {
+        currentUser = {username:u, role:'admin'};
+        setStorage('lastLogin', u);
+        openApp();
+        return;
+    }
+    
+    // User
+    let found = users.find(x => x.username === u && x.password === p);
+    if(found) {
+        currentUser = found;
+        setStorage('lastLogin', u);
+        openApp();
+    } else {
+        alert('Username atau password salah!');
+    }
+}
+
+function doRegister() {
+    let u = document.getElementById('reg-user').value.trim();
+    let p = document.getElementById('reg-pass').value.trim();
+    if(!u || !p) { alert('Isi semua kolom!'); return; }
+    if(users.find(x => x.username === u)) { alert('Username sudah dipakai!'); return; }
+    users.push({username:u, password:p, role:'user'});
+    setStorage('users', users);
+    alert('✅ Berhasil daftar! Silakan masuk.');
+    showPage('login');
+}
+
+function doLogout() {
+    currentUser = null;
+    showPage('login');
+    document.getElementById('adminMenuLink').classList.add('hidden');
+    document.getElementById('shipMenuLink').classList.add('hidden');
+}
+
+function openApp() {
+    showPage('app');
+    // Tampilkan menu admin jika admin
+    if(currentUser.role === 'admin') {
+        document.getElementById('adminMenuLink').classList.remove('hidden');
+        document.getElementById('shipMenuLink').classList.remove('hidden');
+    }
+    // Isi nama pembeli otomatis
+    document.getElementById('buyerName').value = currentUser.username;
+    // Load data awal
+    loadBuyItemOptions();
+    updatePriceDisplay();
+    switchMenu('buy');
+}
+
+// ================== KETUK LOGO 10× ==================
+function tapLogo() {
+    tapCount++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(()=>{ tapCount=0; }, 2000);
+    
+    if(tapCount >= 10) {
+        tapCount = 0;
+        if(currentUser?.role === 'admin') {
+            showToast('✅ Panel Admin sudah bisa diakses dari menu samping!');
+            document.getElementById('adminMenuLink').classList.remove('hidden');
+            document.getElementById('shipMenuLink').classList.remove('hidden');
+        } else {
+            showToast('Hanya admin yang bisa akses!');
+        }
+    }
+}
+
+// ================== GANTI MENU ==================
+function switchMenu(menu) {
+    activeMenu = menu;
+    // Sembunyikan semua
+    document.querySelectorAll('.menu-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.sidebar-menu li a').forEach(el => el.classList.remove('active'));
+    // Tampilkan yang aktif
+    document.getElementById('menu-'+menu).classList.remove('hidden');
+    event.target.classList.add('active');
+    
+    // Load konten
+    if(menu === 'myorders') renderMyOrders();
+    if(menu === 'world') renderWorldList();
+    if(menu === 'admin') { adminTab('orders'); renderAllOrders(); renderShopItems(); renderPriceSettings(); renderUsers(); }
+    if(menu === 'arship') renderArship();
+}
+
+// ================== MENU: BELI ==================
+function loadBuyItemOptions() {
+    let sel = document.getElementById('buyItem');
+    sel.innerHTML = '<option value="">-- Pilih Item --</option>';
+    items.forEach(it => {
+        sel.innerHTML += `<option value="${it.id}">${it.name} — Rp ${it.pricePerK.toLocaleString('id-ID')}/1k</option>`;
+    });
+    sel.onchange = updatePriceDisplay;
+}
+
+function changeQty(delta) {
+    buyQty = Math.max(1, buyQty + delta);
+    document.getElementById('qtyValue').textContent = buyQty + 'k';
+    document.getElementById('qtyNum').textContent = buyQty;
+    updatePriceDisplay();
+}
+
+function updatePriceDisplay() {
+    let itemId = parseInt(document.getElementById('buyItem').value);
+    let item = items.find(x => x.id === itemId);
+    let pricePerK = item ? item.pricePerK : 0;
+    let total = pricePerK * buyQty;
+    
+    document.getElementById('pricePerK').textContent = 'Rp ' + pricePerK.toLocaleString('id-ID');
+    document.getElementById('totalPrice').textContent = 'Rp ' + total.toLocaleString('id-ID');
+}
+
+function placeOrder() {
+    let itemId = parseInt(document.getElementById('buyItem').value);
+    let worldName = document.getElementById('worldName').value.trim();
+    
+    if(!itemId) { alert('Pilih item dulu!'); return; }
+    if(!worldName) { alert('Isi nama world!'); return; }
+    
+    let item = items.find(x => x.id === itemId);
+    let total = item.pricePerK * buyQty;
+    let orderId = 'ORD-' + Date.now();
+    
+    let newOrder = {
+        id: orderId,
+        buyer: currentUser.username,
+        world: worldName,
+        itemId: itemId,
+        itemName: item.name,
+        quantityK: buyQty,
+        pricePerK: item.pricePerK,
+        totalPrice: total,
+        status: 'pending', // pending→waitproof→shipped→done
+        proof: null,
+        date: new Date().toLocaleString('id-ID')
+    };
+    
+    orders.unshift(newOrder);
+    setStorage('orders', orders);
+    
+    // Reset form
+    document.getElementById('worldName').value = '';
+    buyQty = 1;
+    document.getElementById('qtyValue').textContent = '1k';
+    document.getElementById('qtyNum').textContent = '1';
+    document.getElementById('buyItem').value = '';
+    updatePriceDisplay();
+    
+    showToast('✅ Pesanan dibuat! Silakan upload bukti pembayaran di Pesanan Saya');
+    switchMenu('myorders');
+}
+
+// ================== MENU: PESANAN SAYA ==================
+function renderMyOrders() {
+    let myOrders = orders.filter(x => x.buyer === currentUser.username);
+    let html = '';
+    
+    if(myOrders.length === 0) {
+        html = '<p style="text-align:center; color:#94a3b8; padding:40px;">Belum ada pesanan</p>';
+    } else {
+        myOrders.forEach(o => {
+            let statusClass = o.status==='pending'?'status-pending':o.status==='waitproof'?'status-waitproof':o.status==='shipped'?'status-shipped':'status-done';
+            let statusText = o.status==='pending'?'⏳ Menunggu Bukti':o.status==='waitproof'?'🔍 Menunggu Dicek Admin':o.status==='shipped'?'🚚 Sedang Dikirim':'✅ Selesai';
+            
+            html += `
+            <div class="order-card">
+                <div class="order-header">
+                    <div>
+                        <div class="order-id">${o.id} — ${o.date}</div>
+                        <h3 style="margin-top:5px;">${o.itemName} × ${o.quantityK}k</h3>
+                    </div>
+                    <span class="status ${statusClass}">${statusText}</span>
+                </div>
+                <div class="order-info">
+                    <p><strong>World:</strong> ${o.world}</p>
+                    <p><strong>Pembeli:</strong> ${o.buyer}</p>
+                    <p><strong>Total:</strong> Rp ${o.totalPrice.toLocaleString('id-ID')}</p>
+                    ${o.proof ? `<p><strong>Bukti:</strong> <a href="${o.proof}" target="_blank" style="color:#fcd34d;">Lihat Bukti TF</a></p>` : ''}
+                    ${o.status==='shipped' ? `<p style="color:#22c55e; font-weight:bold;">📦 Kirim ${o.quantityK}k ${o.itemName} ke world: ${o.world} — Pemilik: ${o.buyer}</p>` : ''}
+                </div>
+                ${o.status==='pending' ? `
+                <div class="order-actions">
+                    <input type="file" id="proof-${o.id}" accept="image/*" style="display:none;" onchange="uploadProof('${o.id}', this)">
+                    <button class="btn btn-success" onclick="document.getElementById('proof-${o.id}').click()">📸 Upload Bukti Transfer</button>
+                </div>` : ''}
+            </div>`;
+        });
+    }
+    document.getElementById('myOrdersList').innerHTML = html;
+}
+
+function uploadProof(orderId, input) {
+    let file = input.files[0];
+    if(!file) return;
+    
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        let order = orders.find(x => x.id === orderId);
+        order.proof = e.target.result;
+        order.status = 'waitproof';
+        setStorage('orders', orders);
+        renderMyOrders();
+        showToast('✅ Bukti terkirim! Menunggu dicek admin');
+    };
+    reader.readAsDataURL(file);
+}
+
+// ================== MENU: WORLD ==================
+function renderWorldList() {
+    let html = '';
+    if(orders.length === 0) {
+        html = '<p style="text-align:center; color:#94a3b8; padding:40px;">Belum ada data world</p>';
+    } else {
+        orders.forEach(o => {
+            html += `
+            <div class="order-card">
+                <div class="order-id">${o.id}</div>
+                <h3>🌍 ${o.world}</h3>
+                <p><strong>Pembeli:</strong> ${o.buyer}</p>
+                <p><strong>Item:</strong> ${o.itemName} × ${o.quantityK}k</p>
+                <p><strong>Total:</strong> Rp ${o.totalPrice.toLocaleString('id-ID')}</p>
+                <span class="status ${o.status==='pending'?'status-pending':o.status==='waitproof'?'status-waitproof':o.status==='shipped'?'status-shipped':'status-done'}">
+                    ${o.status==='pending'?'⏳ Menunggu Bukti':o.status==='waitproof'?'🔍 Menunggu Dicek':o.status==='shipped'?'🚚 Dikirim':'✅ Selesai'}
+                </span>
+            </div>`;
+        });
+    }
+    document.getElementById('worldList').innerHTML = html;
+}
+
+// ================== ADMIN: TAB ==================
+function adminTab(tab) {
+    adminTabActive = tab;
+    document.getElementById('admin-orders').classList.add('hidden');
+    document.getElementById('admin-shopset').classList.add('hidden');
+    document.getElementById('admin-prices').classList.add('hidden');
+    document.getElementById('admin-users').classList.add('hidden');
+    document.getElementById('admin-'+tab).classList.remove('hidden');
+}
+
+// ================== ADMIN: SEMUA PESANAN ==================
+function renderAllOrders() {
+    let html = '';
+    if(orders.length === 0) {
+        html = '<p style="color:#94a3b8;">Belum ada pesanan masuk</p>';
+    } else {
+        orders.forEach((o, idx) => {
+            let statusClass = o.status==='pending'?'status-pending':o.status==='waitproof'?'status-waitproof':o.status==='shipped'?'status-shipped':'status-done';
+            let statusText = o.status==='pending'?'⏳ Menunggu Bukti':o.status==='waitproof'?'🔍 Menunggu Dicek':o.status==='shipped'?'🚚 Dikirim':'✅ Selesai';
+            
+            html += `
+            <div class="order-card">
+                <div class="order-header">
+                    <div>
+                        <div class="order-id">${o.id} — ${o.date}</div>
+                        <h3>${o.itemName} × ${o.quantityK}k</h3>
+                    </div>
+                    <span class="status ${statusClass}">${statusText}</span>
+                </div>
+                <div class="order-info">
+                    <p><strong>Pembeli:</strong> ${o.buyer}</p>
+                    <p><strong>World:</strong> ${o.world}</p>
+                    <p><strong>Harga per 1k:</strong> Rp ${o.pricePerK.toLocaleString('id-ID')}</p>
+                    <p><strong>Total Transfer:</strong> Rp ${o.totalPrice.toLocaleString('id-ID')}</p>
+                    ${o.proof ? `<p><strong>Bukti TF:</strong> <a href="${o.proof}" target="_blank" style="color:#fcd34d;">👉 Klik Lihat Bukti</a></p>` : '<p style="color:#f87171;">❌ Belum upload bukti</p>'}
+                    ${o.status==='waitproof' ? `<p style="color:#86efac; font-weight:bold;">💡 Harus kirim: ${o.quantityK}k ${o.itemName} ke world "${o.world}" — Pemilik: ${o.buyer}</p>` : ''}
+                </div>
+                <div class="order-actions">
+                    ${o.status==='waitproof' ? `<button class="btn btn-success" onclick="approveOrder('${o.id}')">✅ Terima & Tandai Dikirim</button>` : ''}
+                    ${o.status==='shipped' ? `<button class="btn btn-primary" onclick="completeOrder('${o.id}')">✅ Tandai Selesai & Pindah ke Arship</button>` : ''}
+                    <button class="btn btn-danger btn-sm" onclick="deleteOrder(${idx})">🗑️ Hapus</button>
+                </div>
+            </div>`;
+        });
+    }
+    document.getElementById('allOrdersList').innerHTML = html;
+}
+
+function approveOrder(orderId) {
+    let order = orders.find(x => x.id === orderId);
+    order.status = 'shipped';
+    setStorage('orders', orders);
+    renderAllOrders();
+    showToast(`✅ Ditandai Dikirim!\nKirim ${order.quantityK}k ${order.itemName} ke world "${order.world}" — Pemilik: ${order.buyer}`);
+}
+
+function completeOrder(orderId) {
+    let idx = orders.findIndex(x => x.id === orderId);
+    if(idx === -1) return;
+    
+    let order = orders[idx];
+    order.status = 'done';
+    order.completedDate = new Date().toLocaleString('id-ID');
+    
+    // Pindah ke Arship
+    arshipOrders.unshift(order);
+    setStorage('arshipOrders', arshipOrders);
+    
+    // Hapus dari orders aktif
+    orders.splice(idx, 1);
+    setStorage('orders', orders);
+    
+    renderAllOrders();
+    showToast('✅ Pesanan selesai & dipindah ke Arship Order!');
+}
+
+function deleteOrder(idx) {
+    if(confirm('Yakin hapus pesanan ini?')) {
+        orders.splice(idx, 1);
+        setStorage('orders', orders);
+        renderAllOrders();
+        showToast('Pesanan dihapus');
+    }
+}
+
+// ================== ADMIN: PENGATURAN TOKO ==================
+function previewImg(event) {
+    let file = event.target.files[0];
+    if(!file) return;
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        itemImgData = e.target.result;
+        document.getElementById('imgPreview').src = itemImgData;
+        document.getElementById('imgPreview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+function addItem() {
+    let name = document.getElementById('newItemName').value.trim();
+    if(!name) { alert('Isi nama item!'); return; }
+    
+    let newItem = {
+        id: Date.now(),
+        name: name,
+        pricePerK: 1000, // default
+        img: itemImgData || "https://cdn-icons-png.flaticon.com/512/897/897163.png"
+    };
+    
+    items.push(newItem);
+    setStorage('items', items);
+    
+    // Reset
+    document.getElementById('newItemName').value = '';
+    document.getElementById('newItemImg').value = '';
+    document.getElementById('imgPreview').style.display = 'none';
+    itemImgData = "";
+    
+    renderShopItems();
+    loadBuyItemOptions();
+    renderPriceSettings();
+    showToast('✅ Item ditambahkan! Atur harganya di menu Atur Harga');
+}
+
+function renderShopItems() {
+    let html = '';
+    items.forEach((it, idx) => {
+        html += `
+        <div class="item-card" style="display:flex; align-items:center; gap:15px; text-align:left;">
+            <img src="${it.img}" style="width:60px; height:60px;">
+            <div style="flex:1;">
+                <div class="item-name">${it.name}</div>
+                <div class="item-price">Rp ${it.pricePerK.toLocaleString('id-ID')}/1k</div>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="removeItem(${idx})">🗑️</button>
+        </div>`;
+    });
+    document.getElementById('shopItemsList').innerHTML = html || '<p style="color:#94a3b8;">Belum ada item</p>';
+}
+
+function removeItem(idx) {
+    if(confirm('Hapus item ini?')) {
+        items.splice(idx, 1);
+        setStorage('items', items);
+        renderShopItems();
+        loadBuyItemOptions();
+        renderPriceSettings();
+        showToast('Item dihapus');
+    }
+}
+
+// ================== ADMIN: ATUR HARGA ==================
+function renderPriceSettings() {
+    let html = '';
+    items.forEach(it => {
+        html += `
+        <div style="margin-bottom:15px; padding:15px; background:#334155; border-radius:8px;">
+            <label style="margin-bottom:5px;">${it.name} — Harga per 1k</label>
+            <input type="number" id="price-${it.id}" value="${it.pricePerK}" style="margin-bottom:0;">
+        </div>`;
+    });
+    document.getElementById('priceSettingList').innerHTML = html || '<p style="color:#94a3b8;">Tambah item dulu di Pengaturan Toko</p>';
+}
+
+function saveAllPrices() {
+    items.forEach(it => {
+        let newPrice = parseInt(document.getElementById(`price-${it.id}`).value);
+        if(!isNaN(newPrice) && newPrice > 0) it.pricePerK = newPrice;
+    });
+    setStorage('items', items);
+    loadBuyItemOptions();
+    updatePriceDisplay();
+    renderShopItems();
+    showToast('✅ Semua harga tersimpan!');
+}
+
+// ================== ADMIN: PENGGUNA ==================
+function renderUsers() {
+    let html = '';
+    users.forEach((u, idx) => {
+        html += `
+        <div style="padding:12px; background:#334155; border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <strong>${u.username}</strong>
+                <span style="color:#94a3b8; font-size:13px; margin-left:10px;">User Biasa</span>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="deleteUser(${idx})">Hapus</button>
+        </div>`;
+    });
+    html += `
+    <div style="padding:12px; background:#450a0a; border-radius:8px; margin-top:15px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <strong>${ADMIN_USER}</strong>
+            <span style="color:#fca5a5; font-size:13px; margin-left:10px;">👑 Admin</span>
+        </div>
+        <span style="color:#94a3b8; font-size:12px;">Tidak bisa dihapus</span>
+    </div>`;
+    document.getElementById('usersList').innerHTML = html || '<p style="color:#94a3b8;">Belum ada pengguna</p>';
+}
+
+function deleteUser(idx) {
+    if(confirm('Yakin hapus pengguna ini?')) {
+        users.splice(idx, 1);
+        setStorage('users', users);
+        renderUsers();
+        showToast('Pengguna dihapus');
+    }
+}
+
+// ================== ARSHIP ORDER (HANYA ADMIN) ==================
+function renderArship() {
+    let html = '';
+    if(arshipOrders.length === 0) {
+        html = '<p style="text-align:center; color:#94a3b8; padding:40px;">Belum ada pesanan selesai</p>';
+    } else {
+        arshipOrders.forEach(o => {
+            html += `
+            <div class="order-card" style="border-left-color:#4ade80;">
+                <div class="order-header">
+                    <div>
+                        <div class="order-id">${o.id} — Selesai: ${o.completedDate}</div>
+                        <h3 style="color:#86efac;">${o.itemName} × ${o.quantityK}k</h3>
+                    </div>
+                    <span class="status status-done">✅ SELESAI</span>
+                </div>
+                <div class="order-info">
+                    <p><strong>Pembeli:</strong> ${o.buyer}</p>
+                    <p><strong>World:</strong> ${o.world}</p>
+                    <p><strong>Total Bayar:</strong> Rp ${o.totalPrice.toLocaleString('id-ID')}</p>
+                    <p><strong>Status Kirim:</strong> ✅ Sudah dikirim ke world "${o.world}" — Pemilik: ${o.buyer}</p>
+                    ${o.proof ? `<p><strong>Bukti TF:</strong> <a href="${o.proof}" target="_blank" style="color:#fcd34d;">Lihat Bukti</a></p>` : ''}
+                </div>
+            </div>`;
+        });
+    }
+    document.getElementById('arshipList').innerHTML = html;
+}
+
+// ================== NOTIFIKASI ==================
+function showToast(msg) {
+    let t = document.getElementById('toast');
+    t.innerHTML = msg.replace(/\n/g, '<br>');
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 4000);
+}
+
+// ================== AUTO LOGIN ==================
+window.onload = function() {
+    let lastUser = localStorage.getItem('lastLogin');
+    if(lastUser) {
+        document.getElementById('login-user').value = lastUser;
+    }
+};
+</script>
+
+</body>
+</html>
